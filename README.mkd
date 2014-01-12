@@ -1,0 +1,88 @@
+# ew -- an egrep wrapper in bash
+
+ew is an 'egrep wrapper' that
+
+*   forces recursion in $PWD when input is a terminal
+*   ignores binary files
+*   emulates ack's smartcase (adds '-i' flag if the pattern has no upper case
+    characters)
+*   emulates ack's '-G' option by translating it to egrep's '--include'.
+    *   (However, this uses a glob, not a pattern, so instead of `-G foo` you
+        have to say `-G '*foo*'`.  I don't use this often enough to care.  It
+        also seems like ack has now removed this option too)
+*   passes any other options to egrep
+
+VCS exclusions are handled by (separately) settting this in your env, though
+it would be trivial to add that into the script as well, if needed:
+
+     export GREP_OPTIONS="--exclude-dir=.git"
+
+## comparison with ag and ack
+
+Don't read this if your 'grep' needs are limited to files with specific,
+well-known, file extensions.
+
+Recently a [new contender][ag] for the "fast grep" throne has appeared. I
+spent a few minutes doing some quick comparisons between these three:
+
+*   ack is *always* slower (usually *much* slower) than the other two.
+
+*   ag is fastest.  *Always* far faster than ack, and *sometimes* far faster
+    than ew.  See next bullet.
+
+*   ew is *marginally* slower than ag if you have a pattern that does not
+    invoke smartcasing (i.e., does not pass `-i` to grep).
+
+    But if smartcasing is invoked it becomes MUCH slower.  For example, `ew
+    xxx` is much slower than `ew [xX][xX][xX]`!
+
+    It may be a DFA/NFA thing, but whatever it is, that `-i` is really taking
+    a toll on egrep!  No idea how to fix that (if it can be fixed at all!)
+
+However, I won't use ag.  It has **stupid behaviour** like this:
+
+    ag Free /proc/meminfo   # produces nothing!
+
+This reminds me too much of the nightmare that ack was, and all the reasons I
+stopped using ack back in the day. In fact you can blame ack for my
+unwillingness to give ag a chance -- I refuse to try anything that claims to
+be a successor to ack!
+
+Details follow (if you care) but **TLDR**: these tools reject a lot more files
+behind the scenes than they are willing to document (that /proc/meminfo
+example being one).
+
+## appendix: why I went from loving ack to hating it
+
+I have no idea if things have improved in the last few years, but I really
+have no interest in keeping track of a project whose author has the gall to
+say ["There's really no English that explains how it works"][1] when asked to
+document the file selection logic.
+
+Curiously, it was not that ill-advised comment that made me stop using ack. I
+still loved ack, so I attempted to help the author with his lack of English
+skills ;-)
+
+Big mistake.  The [file selection logic][2] was crazy.  For example, consider
+the guy who started that thread -- it turned out that ack would search files
+whose content started with `<?xml` but ignore files that started with
+`<!DOCTYPE`.  WTF??
+
+So anyway, once I wrote down the file selection logic and emailed the list, I
+sat down to think.  And quickly realised there's no way I could use something
+so bloody arbitrary.
+
+The irony is that something I did because I loved the program made me realise
+what a steaming pile of dog-poo it was.
+
+(Actually, that's not the worst of ack.  At one time, using it to search STDIN
+would end up searching the *current directory* if STDIN happened to be empty!
+If the pipe happened to contain even one byte, it would work as expected.
+Luckily someone sent a patch to to fix that.  After a [lot of discussion][3],
+at least some of which seemed to be implying "this was intended".  Uggh...)
+
+[1]: http://groups.google.com/group/ack-users/browse_thread/thread/ae646df76cc15259
+[2]: http://groups.google.com/group/ack-users/browse_thread/thread/91d95a012be2905a
+[3]: https://groups.google.com/d/msg/ack-users/oa82NsPqhvo/Y2f0RTnY5dEJ
+
+[ag]: https://github.com/ggreer/the_silver_searcher
