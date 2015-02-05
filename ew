@@ -14,9 +14,8 @@
 #
 # Features:
 #   1.  forces egrep syntax (-E).  When input is a terminal, also forces
-#       recursion (-r), and ignores binary files (-I).  Exclusions are handled
-#       by setting the environment variable GREP_OPTIONS.  For example:
-#           export GREP_OPTIONS="--exclude-dir=.git"
+#       recursion (-r), ignores binary files (-I), and excludes git
+#       directories.
 #   2.  'smartcase' emulation: if the pattern does not have any uppercase
 #       letters, adds the '-i' flag
 #   3.  you can restrict the search to specific glob(s) -- use as many '-G'
@@ -110,4 +109,4 @@ done
 }
 
 [[ -n $D ]] && set -x
-grep "${args[@]}" $stdin
+grep -D skip -R -I --exclude-dir=.git "${args[@]}" $stdin
