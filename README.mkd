@@ -1,5 +1,38 @@
 # ew -- an egrep wrapper in bash
 
+PROJECT ABANDONED (replaced by a few lines of code in an rc file; see below)
+
+----
+
+I no longer use this code.  It's been replaced by the following lines in my
+`~/.__rc`
+
+    ## ew:ew pattern [paths] [-G include-glob ...]
+    ## ew:cmd | ew pattern
+    ## ew:(note 1: may have some space-in-filenames issues)
+    ## ew:(note 2: starting with an option means full manual control except -G)
+    ew %
+        ew %1
+        ?   $ENV{_I} = "-i"; $ENV{_R} = "-r";       # ignore case on, recurse on
+            $ENV{_I} = "" if "%1" =~ /^-|[A-Z]/;    # ignore case off if starting with option or contains uppercase letter
+            $ENV{_R} = "" if $ENV{_tty} == 0;       # recurse off if pipe
+    ew %%
+        ew %?
+        ?   my $x = "%1"; $x =~ s/ -G (\S+)/ --include "$1"/g; $x;
+    ew
+        grep -E -D skip --color=auto -I $_R $_I
+
+The `.__rc` file is essentially code that morphs a command as it goes through
+the rules that match, and executes what comes out at the end.  See
+<https://github.com/sitaramc/active-aliases> for more.
+
+These few lines replace the 40+ lines of code that make up 'ew', while
+providing all the features that 'ew' did.  Take a look at active-aliases if
+you're interested; it's a pretty nifty little tool.  Some of the examples in
+the documentation may even surprise you!
+
+----
+
 ew is an 'egrep wrapper' that
 
 *   forces recursion in $PWD when input is a terminal
