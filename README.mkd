@@ -9,18 +9,37 @@ I no longer use this code.  It's been replaced by the following lines in my
 
     ## ew:ew pattern [paths] [-G include-glob ...]
     ## ew:cmd | ew pattern
-    ## ew:(note 1: may have some space-in-filenames issues)
-    ## ew:(note 2: starting with an option means full manual control except -G)
-    ew %
-        ew %1
+    ## ew:(note: may have some space-in-filenames issues)
+    ew	_rg	-x "/usr/bin/rg" or -x "/usr/local/bin/rg" or -x "$ENV{HOME}/bin/rg"
+    ew	_ew
+    _ew %	_ew %1
         ?   $ENV{_I} = "-i"; $ENV{_R} = "-r";       # ignore case on, recurse on
-            $ENV{_I} = "" if "%1" =~ /^-|[A-Z]/;    # ignore case off if starting with option or contains uppercase letter
+            $ENV{_I} = "" if "%1" =~ /^[A-Z]/;      # ignore case off if contains uppercase letter
             $ENV{_R} = "" if $ENV{_tty} == 0;       # recurse off if pipe
-    ew %%
-        ew %?
+    _ew %%	_ew %?
         ?   my $x = "%1"; $x =~ s/ -G (\S+)/ --include "$1"/g; $x;
-    ew
-        grep -E -D skip --color=auto -I $_R $_I
+    _ew	grep -E -D skip --exclude-dir=.git --color=auto -I $_R $_I
+    _rg	rg --hidden -g '!.git' -S
+
+The bulk of those lines implement `ew` using my "active aliases" tool (see
+below the dashed line for more on that).
+
+The first and last lines... what can I say?  I am **blown away** by
+[ripgrep](https://github.com/BurntSushi/ripgrep).  This is also probably the
+first time I was swayed to switching to a tool simply by the depth of a
+[blogpost](http://blog.burntsushi.net/ripgrep/) about it.
+
+Honestly, grep itself would be fine, with suitable options (like
+`--exclude-dir`), but it lacks the crucial **smartcase** feature, something I
+consider absolutely indispensable for day-to-day use.
+
+However, I often do multiple searches in log files (where the same file is
+read again and again, with iterative changes in the regex), and the speed
+difference is sometimes (though not always) noticeable.
+
+----
+
+So what exactly is that code there?
 
 The `.__rc` file is essentially code that morphs a command as it goes through
 the rules that match, and executes what comes out at the end.  See
